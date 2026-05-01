@@ -1,11 +1,8 @@
 !macro preInit
   ; Electron-builder lit HKCU\Software\com.helltrucker.ebook-translate\InstallLocation
-  ; apres avoir pose sa valeur par defaut — on ecrit en registre avant cette lecture
-  SetRegView 64
-  ReadRegStr $R0 HKCU "Software\com.helltrucker.ebook-translate" "InstallLocation"
-  ${If} $R0 == ""
-    WriteRegStr HKCU "Software\com.helltrucker.ebook-translate" "InstallLocation" "C:\eBook Translate"
-  ${EndIf}
+  ; dans .onInit apres avoir pose sa valeur par defaut.
+  ; On ecrit TOUJOURS ici pour garantir que C:\eBook Translate soit le defaut.
+  WriteRegStr HKCU "Software\com.helltrucker.ebook-translate" "InstallLocation" "C:\eBook Translate"
 !macroend
 
 !macro customInstall

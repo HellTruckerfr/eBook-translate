@@ -126,13 +126,13 @@ MonProjet/
 
 ## Logs
 
-En production (après installation), le log backend se trouve dans le dossier d'installation :
+En production (après installation), le log backend se trouve dans :
 
 ```
-C:\eBook Translate\ebook-backend.log
+%APPDATA%\eBook-Translate\ebook-backend.log
 ```
 
-Fallback sur `%APPDATA%\eBook-Translate\ebook-backend.log` si le dossier n'est pas accessible en écriture (droits insuffisants sur `C:\`).
+Soit typiquement `C:\Users\<nom>\AppData\Roaming\eBook-Translate\ebook-backend.log`.
 
 ---
 

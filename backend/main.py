@@ -16,23 +16,12 @@ from translator import translate_chapter, update_arc_resume
 from exporter import export_json_chapters, export_txt_chapters, export_epub_by_arc, recover_from_json, export_glossary_csv, import_glossary_csv
 
 # ── Logging ────────────────────────────────────────────────
-def _resolve_log_file() -> Path:
-    # En mode packagé : sys.executable = <install>/resources/backend/ebook-backend.exe
-    # On essaie d'écrire dans le dossier d'installation ; fallback sur AppData si refus
-    candidates = []
-    if getattr(sys, "frozen", False):
-        candidates.append(Path(sys.executable).parent.parent.parent / "ebook-backend.log")
-    candidates.append(Path(cfg.APP_DATA) / "ebook-backend.log")
-    for path in candidates:
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.open("a", encoding="utf-8").close()
-            return path
-        except Exception:
-            continue
-    return candidates[-1]  # dernier recours
-
-_LOG_FILE = _resolve_log_file()
+# Toujours AppData — C:\ racine nécessite des droits admin et déclenche UAC
+_LOG_FILE = Path(cfg.APP_DATA) / "ebook-backend.log"
+try:
+    _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+except Exception:
+    _LOG_FILE = Path.home() / "ebook-backend.log"
 
 _fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 _file_handler = logging.FileHandler(_LOG_FILE, encoding="utf-8")
