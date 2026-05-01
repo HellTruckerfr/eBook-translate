@@ -128,6 +128,10 @@ def update_config(body: ConfigUpdate):
     cfg.save_config({k: v for k, v in body.model_dump().items() if v is not None})
     return {"ok": True}
 
+@app.get("/api/usage")
+def get_usage():
+    return {**session_usage, "cout_usd": round(session_usage["cout_usd"], 4)}
+
 @app.get("/api/logs")
 def get_log_tail(lines: int = 200):
     try:

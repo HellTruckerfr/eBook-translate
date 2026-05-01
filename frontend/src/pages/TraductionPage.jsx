@@ -29,6 +29,7 @@ export default function TraductionPage({ stats, wsEvents }) {
   const [workers, setWorkers] = useState(1)
   const [error, setError] = useState(null)
   const [lastErrors, setLastErrors] = useState([])
+  const [usage, setUsage] = useState(null)
   const statsTimerRef = useRef(null)
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export default function TraductionPage({ stats, wsEvents }) {
     }
     if (last.type === 'chapitre_traduit') {
       if (last.data?.error) setLastErrors(prev => [last.data, ...prev.slice(0, 4)])
+      if (last.usage) setUsage(last.usage)
       loadStatsDebounced()
     }
     if (last.type === 'error') {
@@ -120,6 +122,11 @@ export default function TraductionPage({ stats, wsEvents }) {
             <p className="text-text-secondary text-sm mt-1">
               {stats.traduits} / {stats.total} chapitres traduits
               {stats.en_cours > 0 && <span className="text-status-progress ml-2">· {stats.en_cours} en cours</span>}
+              {usage && (
+                <span className="text-text-muted ml-3">
+                  · ~${usage.cout_usd.toFixed(4)} USD · {((usage.prompt_tokens + usage.completion_tokens) / 1000).toFixed(1)}k tokens
+                </span>
+              )}
             </p>
           )}
         </div>
