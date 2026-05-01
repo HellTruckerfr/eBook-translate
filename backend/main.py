@@ -65,6 +65,27 @@ active_ws: list[WebSocket] = []
 translation_running = False
 glossary_running    = False
 
+# ── Suivi consommation Mistral (session) ───────────────────
+# Prix indicatifs en $/million de tokens (input / output)
+_PRIX = {
+    "mistral-large-latest":  {"input": 2.0,  "output": 6.0},
+    "mistral-medium-latest": {"input": 0.4,  "output": 2.0},
+    "mistral-small-latest":  {"input": 0.1,  "output": 0.3},
+}
+session_usage: dict = {"prompt_tokens": 0, "completion_tokens": 0, "cout_usd": 0.0}
+
+def _accumulate_usage(usage: dict):
+    for key in ("trad", "resume"):
+        u = usage.get(key, {})
+        model   = u.get("model", "")
+        prompt  = u.get("prompt", 0)
+        compl   = u.get("completion", 0)
+        prix    = _PRIX.get(model, {"input": 2.0, "output": 6.0})
+        cout    = (prompt * prix["input"] + compl * prix["output"]) / 1_000_000
+        session_usage["prompt_tokens"]     += prompt
+        session_usage["completion_tokens"] += compl
+        session_usage["cout_usd"]          += cout
+
 async def broadcast(msg: dict):
     for ws in active_ws:
         try:
@@ -562,7 +583,14 @@ async def _run_translation(nom: str, arc_id: Optional[int]):
                 result = await translate_chapter(nom, cid)
                 if result.get("statut") == "erreur":
                     logger.warning(f"chapitre {cid} erreur: {result.get('erreur')}")
-                await broadcast({"type": "chapitre_traduit", "data": result, "stats": get_stats(nom)})
+                if result.get("usage"):
+                    _accumulate_usage(result["usage"])
+                await broadcast({
+                    "type": "chapitre_traduit",
+                    "data": result,
+                    "stats": get_stats(nom),
+                    "usage": {**session_usage, "cout_usd": round(session_usage["cout_usd"], 4)},
+                })
                 conn2 = get_db(nom)
                 row = conn2.execute("SELECT arc_id FROM chapitres WHERE id=?", (cid,)).fetchone()
                 conn2.close()

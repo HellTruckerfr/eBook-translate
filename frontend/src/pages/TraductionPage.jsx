@@ -69,7 +69,7 @@ export default function TraductionPage({ stats, wsEvents }) {
 
   const loadChapitres = async (arcId) => {
     setSelectedArc(arcId)
-    const data = await api.getChapitres({ arc_id: arcId, limit: 300 })
+    const data = await api.getChapitres({ arc_id: arcId, limit: 999 })
     setChapitres(data)
   }
 

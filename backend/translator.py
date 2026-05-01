@@ -132,6 +132,7 @@ TEXTE À TRADUIRE :
             temperature=0.3,
         )
         texte_fr = clean_markdown(response.choices[0].message.content)
+        usage_trad = response.usage
 
         # Extract French title from the first line the LLM generated
         # Only use it if richer than the existing title (not a bare "Chapitre N")
@@ -147,6 +148,7 @@ TEXTE À TRADUIRE :
             temperature=0.1,
         )
         resume = resume_response.choices[0].message.content.strip()
+        usage_resume = resume_response.usage
 
         conn.execute("""
             UPDATE chapitres
@@ -155,7 +157,14 @@ TEXTE À TRADUIRE :
         """, (texte_fr, len(texte_fr.split()), resume, titre_fr_traduit, chapter_id))
         conn.commit()
         conn.close()
-        return {"id": chapter_id, "statut": "traduit", "mots_fr": len(texte_fr.split()), "titre_fr": titre_fr_traduit}
+        return {
+            "id": chapter_id, "statut": "traduit",
+            "mots_fr": len(texte_fr.split()), "titre_fr": titre_fr_traduit,
+            "usage": {
+                "trad":   {"model": model_trad,   "prompt": usage_trad.prompt_tokens,   "completion": usage_trad.completion_tokens},
+                "resume": {"model": model_resume, "prompt": usage_resume.prompt_tokens, "completion": usage_resume.completion_tokens},
+            }
+        }
 
     except Exception as e:
         import traceback
