@@ -3,6 +3,12 @@ const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 
+// Verrou single-instance : si une copie tourne déjà, on la focus et on quitte
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) {
+  app.quit()
+}
+
 let mainWindow = null
 let backendProcess = null
 
@@ -26,7 +32,6 @@ function startBackend() {
   const exePath = getBackendPath()
   if (!exePath || !fs.existsSync(exePath)) return
   backendProcess = spawn(exePath, [], { detached: false, stdio: 'ignore' })
-  // pas de unref() — on garde la référence pour pouvoir le tuer proprement
 }
 
 function waitForBackend(url, retries = 60) {
@@ -40,6 +45,36 @@ function waitForBackend(url, retries = 60) {
     check(retries)
   })
 }
+
+const LOADING_HTML = `data:text/html,<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f0f0f;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #94a3b8;
+    gap: 16px;
+    -webkit-app-region: drag;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid #1e293b;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  p { font-size: 13px; letter-spacing: 0.05em; }
+</style></head>
+<body>
+  <div class="spinner"></div>
+  <p>Démarrage en cours…</p>
+</body>
+</html>`
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -75,6 +110,8 @@ async function createWindow() {
   })
 
   if (app.isPackaged) {
+    // Affiche l'écran de chargement immédiatement — la fenêtre est visible pendant l'extraction PyInstaller
+    mainWindow.loadURL(LOADING_HTML)
     try {
       await waitForBackend('http://localhost:8000/api/config')
     } catch (e) {
@@ -93,6 +130,14 @@ app.whenReady().then(() => {
   globalShortcut.register('CommandOrControl+Shift+I', () => {
     mainWindow?.webContents.toggleDevTools()
   })
+})
+
+// Si l'utilisateur double-clique alors qu'une instance tourne déjà → focus la fenêtre existante
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
+  }
 })
 
 app.on('before-quit', killBackend)
