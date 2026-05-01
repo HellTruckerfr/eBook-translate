@@ -1,15 +1,14 @@
 !macro preInit
-  ; Electron-builder lit SHCTX (HKCU pour install user) en 64-bit APRES preInit.
-  ; On ecrit dans les 4 combinaisons (32/64-bit x HKCU/HKLM) pour etre sur.
+  ; perMachine=true : SHCTX = HKLM. On ecrit dans les deux vues registre.
   SetRegView 64
-  WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation" "C:\eBook Translate"
-  ClearErrors
   WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" "InstallLocation" "C:\eBook Translate"
+  ClearErrors
+  WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation" "C:\eBook Translate"
   ClearErrors
   SetRegView 32
-  WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation" "C:\eBook Translate"
-  ClearErrors
   WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" "InstallLocation" "C:\eBook Translate"
+  ClearErrors
+  WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation" "C:\eBook Translate"
   ClearErrors
 !macroend
 
