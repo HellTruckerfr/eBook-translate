@@ -72,7 +72,8 @@ _PRIX = {
     "mistral-medium-latest": {"input": 0.4,  "output": 2.0},
     "mistral-small-latest":  {"input": 0.1,  "output": 0.3},
 }
-session_usage: dict = {"prompt_tokens": 0, "completion_tokens": 0, "cout_usd": 0.0}
+_EUR_PER_USD = 0.92  # taux indicatif
+session_usage: dict = {"prompt_tokens": 0, "completion_tokens": 0, "cout_usd": 0.0, "cout_eur": 0.0}
 
 def _accumulate_usage(usage: dict):
     for key in ("trad", "resume"):
@@ -85,6 +86,7 @@ def _accumulate_usage(usage: dict):
         session_usage["prompt_tokens"]     += prompt
         session_usage["completion_tokens"] += compl
         session_usage["cout_usd"]          += cout
+        session_usage["cout_eur"]          += cout * _EUR_PER_USD
 
 async def broadcast(msg: dict):
     for ws in active_ws:
@@ -130,7 +132,11 @@ def update_config(body: ConfigUpdate):
 
 @app.get("/api/usage")
 def get_usage():
-    return {**session_usage, "cout_usd": round(session_usage["cout_usd"], 4)}
+    return {
+        **session_usage,
+        "cout_usd": round(session_usage["cout_usd"], 4),
+        "cout_eur": round(session_usage["cout_eur"], 4),
+    }
 
 @app.get("/api/logs")
 def get_log_tail(lines: int = 200):
@@ -593,7 +599,7 @@ async def _run_translation(nom: str, arc_id: Optional[int]):
                     "type": "chapitre_traduit",
                     "data": result,
                     "stats": get_stats(nom),
-                    "usage": {**session_usage, "cout_usd": round(session_usage["cout_usd"], 4)},
+                    "usage": {**session_usage, "cout_usd": round(session_usage["cout_usd"], 4), "cout_eur": round(session_usage["cout_eur"], 4)},
                 })
                 conn2 = get_db(nom)
                 row = conn2.execute("SELECT arc_id FROM chapitres WHERE id=?", (cid,)).fetchone()
@@ -631,6 +637,76 @@ def get_chapitres(arc_id: int = None, statut: str = None, page: int = 1, limit: 
     rows = conn.execute(query, params).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+@app.get("/api/chapitres/search")
+def search_chapitres(q: str, champ: str = "fr", case_sensitive: bool = False):
+    import re
+    nom = _projet_actif()
+    conn = get_db(nom)
+    field = "texte_fr" if champ == "fr" else "texte_en"
+    rows = conn.execute(
+        f"SELECT id, titre_fr, arc_id, {field} FROM chapitres WHERE {field} LIKE ?",
+        (f"%{q}%",)
+    ).fetchall()
+    conn.close()
+
+    flags   = 0 if case_sensitive else re.IGNORECASE
+    pattern = re.compile(re.escape(q), flags)
+    results = []
+    for row in rows:
+        texte   = row[field] or ""
+        matches = list(pattern.finditer(texte))
+        if not matches:
+            continue
+        snippets = []
+        for m in matches[:3]:
+            s = max(0, m.start() - 80)
+            e = min(len(texte), m.end() + 80)
+            snippet = texte[s:e].replace("\n", " ").strip()
+            snippet = pattern.sub(lambda x: f">>>{x.group()}<<<", snippet)
+            snippets.append(snippet)
+        results.append({
+            "id": row["id"], "titre_fr": row["titre_fr"], "arc_id": row["arc_id"],
+            "occurrences": len(matches), "snippets": snippets,
+        })
+
+    return {
+        "q": q,
+        "total": len(results),
+        "total_occurrences": sum(r["occurrences"] for r in results),
+        "chapitres": results,
+    }
+
+class ReplaceBody(BaseModel):
+    find: str
+    replace: str
+    chapter_ids: list[int]
+    case_sensitive: bool = False
+
+@app.post("/api/chapitres/replace")
+def replace_in_chapitres(body: ReplaceBody):
+    import re
+    nom  = _projet_actif()
+    conn = get_db(nom)
+    flags   = 0 if body.case_sensitive else re.IGNORECASE
+    pattern = re.compile(re.escape(body.find), flags)
+    total_replaced = 0
+    chapitres_updated = []
+    for cid in body.chapter_ids:
+        row = conn.execute("SELECT texte_fr FROM chapitres WHERE id=?", (cid,)).fetchone()
+        if not row or not row["texte_fr"]:
+            continue
+        new_text, n = pattern.subn(body.replace, row["texte_fr"])
+        if n > 0:
+            conn.execute(
+                "UPDATE chapitres SET texte_fr=?, mots_fr=? WHERE id=?",
+                (new_text, len(new_text.split()), cid)
+            )
+            total_replaced += n
+            chapitres_updated.append({"id": cid, "occurrences": n})
+    conn.commit()
+    conn.close()
+    return {"ok": True, "total_replaced": total_replaced, "chapitres": chapitres_updated}
 
 @app.get("/api/chapitres/{chapter_id}")
 def get_chapitre(chapter_id: int):

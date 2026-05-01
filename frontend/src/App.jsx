@@ -44,7 +44,7 @@ const NAV = [
 export default function App() {
   const [stats, setStats]       = useState(null)
   const [wsEvents, setWsEvents] = useState([])
-  const [usage, setUsage]       = useState({ prompt_tokens: 0, completion_tokens: 0, cout_usd: 0.0 })
+  const [usage, setUsage]       = useState({ prompt_tokens: 0, completion_tokens: 0, cout_usd: 0.0, cout_eur: 0.0 })
 
   useEffect(() => {
     fetch('/api/usage').then(r => r.json()).then(setUsage).catch(() => {})
@@ -86,7 +86,7 @@ export default function App() {
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-text-muted">Coût estimé</span>
-                  <span className="font-mono text-accent-light">~${usage.cout_usd.toFixed(4)}</span>
+                  <span className="font-mono text-accent-light">~{(usage.cout_eur ?? usage.cout_usd * 0.92).toFixed(4)} €</span>
                 </div>
               </div>
             <div className="flex justify-between text-xs text-text-muted mb-1.5">

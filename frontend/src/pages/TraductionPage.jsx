@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Play, Square, RefreshCw, ChevronRight, ChevronLeft, X, RotateCcw, Trash2 } from 'lucide-react'
+import { Play, Square, RefreshCw, ChevronRight, ChevronLeft, X, RotateCcw, Trash2, Search, ArrowRightLeft } from 'lucide-react'
 import { api } from '../api'
 
 const ARCS = [
@@ -221,6 +221,9 @@ export default function TraductionPage({ stats, wsEvents }) {
         })}
       </div>
 
+      {/* Recherche / Remplacement */}
+      <RechercheRemplace />
+
       {/* Réinitialiser une plage */}
       <ResetPlage onDone={loadStats} />
 
@@ -264,6 +267,214 @@ export default function TraductionPage({ stats, wsEvents }) {
           onClose={() => { setEditChapitre(null); if (selectedArc) loadChapitres(selectedArc) }}
           onRetranslate={retranslate}
         />
+      )}
+    </div>
+  )
+}
+
+function HighlightSnippet({ text }) {
+  const parts = text.split(/(>>>.+?<<<)/g)
+  return (
+    <span>
+      {parts.map((p, i) =>
+        p.startsWith('>>>') && p.endsWith('<<<')
+          ? <mark key={i} className="bg-accent/30 text-accent-light px-0.5 rounded not-italic">{p.slice(3, -3)}</mark>
+          : p
+      )}
+    </span>
+  )
+}
+
+function RechercheRemplace() {
+  const [open, setOpen]             = useState(false)
+  const [query, setQuery]           = useState('')
+  const [champ, setChamp]           = useState('fr')
+  const [caseSensitive, setCaseSensitive] = useState(false)
+  const [loading, setLoading]       = useState(false)
+  const [results, setResults]       = useState(null)
+  const [selected, setSelected]     = useState(new Set())
+  const [replaceWith, setReplaceWith] = useState('')
+  const [replacing, setReplacing]   = useState(false)
+  const [replaceResult, setReplaceResult] = useState(null)
+  const [expanded, setExpanded]     = useState(new Set())
+
+  const search = async () => {
+    if (!query.trim()) return
+    setLoading(true)
+    setResults(null)
+    setReplaceResult(null)
+    try {
+      const data = await api.searchChapitres({ q: query, champ, case_sensitive: caseSensitive })
+      setResults(data)
+      setSelected(new Set(data.chapitres.map(c => c.id)))
+      setExpanded(new Set())
+    } catch (e) {
+      setResults({ error: e.message })
+    }
+    setLoading(false)
+  }
+
+  const toggleAll = () => {
+    if (!results?.chapitres) return
+    setSelected(selected.size === results.chapitres.length
+      ? new Set()
+      : new Set(results.chapitres.map(c => c.id)))
+  }
+
+  const toggleOne = (id) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleExpand = (id, e) => {
+    e.stopPropagation()
+    setExpanded(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const replace = async () => {
+    const ids = [...selected]
+    if (!ids.length) return
+    const label = replaceWith === '' ? '(vide)' : `"${replaceWith}"`
+    if (!confirm(`Remplacer "${query}" par ${label} dans ${ids.length} chapitre(s) ?\nOpération irréversible.`)) return
+    setReplacing(true)
+    setReplaceResult(null)
+    try {
+      const res = await api.replaceInChapitres({ find: query, replace: replaceWith, chapter_ids: ids, case_sensitive: caseSensitive })
+      setReplaceResult(res)
+      await search()
+    } catch (e) {
+      setReplaceResult({ error: e.message })
+    }
+    setReplacing(false)
+  }
+
+  return (
+    <div className="mb-6">
+      <button onClick={() => { setOpen(v => !v); setResults(null); setReplaceResult(null) }}
+        className="flex items-center gap-2 text-sm text-text-muted hover:text-accent transition-colors">
+        <Search size={13} />
+        {open ? 'Masquer la recherche' : 'Rechercher / remplacer dans les traductions'}
+      </button>
+
+      {open && (
+        <div className="mt-3 bg-bg-card border border-border rounded-lg p-4">
+          {/* Barre de recherche */}
+          <div className="flex flex-wrap items-end gap-3 mb-4">
+            <div className="flex-1 min-w-48">
+              <label className="text-xs text-text-muted block mb-1">Terme à chercher</label>
+              <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && search()}
+                placeholder="ex. : vampire system"
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary outline-none focus:border-accent/50" />
+            </div>
+            <div>
+              <label className="text-xs text-text-muted block mb-1">Champ</label>
+              <select value={champ} onChange={e => setChamp(e.target.value)}
+                className="bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary outline-none">
+                <option value="fr">Traduction FR</option>
+                <option value="en">Original EN</option>
+              </select>
+            </div>
+            <label className="flex items-center gap-1.5 text-xs text-text-muted pb-2 cursor-pointer select-none">
+              <input type="checkbox" checked={caseSensitive} onChange={e => setCaseSensitive(e.target.checked)} />
+              Sensible à la casse
+            </label>
+            <button onClick={search} disabled={loading || !query.trim()}
+              className="flex items-center gap-2 bg-accent hover:bg-accent-glow text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+              {loading ? <RotateCcw size={13} className="animate-spin" /> : <Search size={13} />}
+              Rechercher
+            </button>
+          </div>
+
+          {/* Résultats */}
+          {results && !results.error && (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-text-muted">
+                  <span className="font-semibold text-text-primary">{results.total}</span> chapitre(s) ·&nbsp;
+                  <span className="font-semibold text-text-primary">{results.total_occurrences}</span> occurrence(s)
+                </p>
+                {results.chapitres.length > 0 && (
+                  <button onClick={toggleAll} className="text-xs text-accent hover:text-accent-light">
+                    {selected.size === results.chapitres.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                  </button>
+                )}
+              </div>
+
+              {results.chapitres.length === 0 && (
+                <p className="text-sm text-text-muted italic">Aucun résultat.</p>
+              )}
+
+              {results.chapitres.length > 0 && (
+                <div className="max-h-72 overflow-y-auto rounded border border-border mb-4">
+                  {results.chapitres.map(c => (
+                    <div key={c.id}
+                      className={`px-3 py-2.5 flex items-start gap-2.5 text-sm cursor-pointer hover:bg-bg transition-colors border-b border-border last:border-0
+                        ${selected.has(c.id) ? '' : 'opacity-40'}`}
+                      onClick={() => toggleOne(c.id)}>
+                      <input type="checkbox" checked={selected.has(c.id)} readOnly className="mt-0.5 shrink-0 cursor-pointer" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-text-muted shrink-0">Ch.{c.id}</span>
+                          <span className="text-text-primary text-xs truncate">{c.titre_fr}</span>
+                          <span className="shrink-0 text-xs bg-accent/20 text-accent-light px-1.5 py-0.5 rounded font-mono ml-auto">{c.occurrences}×</span>
+                        </div>
+                        {c.snippets?.slice(0, expanded.has(c.id) ? 3 : 1).map((s, i) => (
+                          <p key={i} className="text-xs text-text-muted mt-1 font-mono leading-relaxed line-clamp-2">
+                            <HighlightSnippet text={s} />
+                          </p>
+                        ))}
+                        {c.snippets?.length > 1 && (
+                          <button onClick={e => toggleExpand(c.id, e)}
+                            className="text-xs text-accent/60 hover:text-accent mt-0.5">
+                            {expanded.has(c.id) ? '▲ moins' : `▼ +${c.snippets.length - 1} extrait(s)`}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Zone de remplacement */}
+              {results.chapitres.length > 0 && (
+                <div className="flex flex-wrap items-end gap-3 pt-3 border-t border-border">
+                  <div className="flex-1 min-w-48">
+                    <label className="text-xs text-text-muted block mb-1">Remplacer par</label>
+                    <input type="text" value={replaceWith} onChange={e => setReplaceWith(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && replace()}
+                      placeholder="Nouveau terme (laisser vide = supprimer)"
+                      className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary outline-none focus:border-status-error/50" />
+                  </div>
+                  <button onClick={replace} disabled={replacing || selected.size === 0}
+                    className="flex items-center gap-2 bg-status-error/20 border border-status-error/40 text-status-error hover:bg-status-error/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                    {replacing ? <RotateCcw size={13} className="animate-spin" /> : <ArrowRightLeft size={13} />}
+                    Remplacer dans {selected.size} chapitre(s)
+                  </button>
+                </div>
+              )}
+
+              {replaceResult && (
+                <p className={`text-sm mt-2 ${replaceResult.error ? 'text-status-error' : 'text-status-done'}`}>
+                  {replaceResult.error
+                    ? replaceResult.error
+                    : `✓ ${replaceResult.total_replaced} occurrence(s) remplacée(s) dans ${replaceResult.chapitres.length} chapitre(s)`}
+                </p>
+              )}
+            </>
+          )}
+
+          {results?.error && (
+            <p className="text-sm text-status-error">{results.error}</p>
+          )}
+        </div>
       )}
     </div>
   )

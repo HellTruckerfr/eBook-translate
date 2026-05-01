@@ -52,9 +52,11 @@ export const api = {
   resetPlage:           (data)    => req('POST', '/traduction/reset-plage', data),
 
   // Chapitres
-  getChapitres:   (params={})  => req('GET',  `/chapitres?${new URLSearchParams(params)}`),
-  getChapitre:    (id)         => req('GET',  `/chapitres/${id}`),
-  updateChapitre: (id, data)   => req('PUT',  `/chapitres/${id}`, data),
+  getChapitres:       (params={})  => req('GET',  `/chapitres?${new URLSearchParams(params)}`),
+  getChapitre:        (id)         => req('GET',  `/chapitres/${id}`),
+  updateChapitre:     (id, data)   => req('PUT',  `/chapitres/${id}`, data),
+  searchChapitres:    (params={})  => req('GET',  `/chapitres/search?${new URLSearchParams(params)}`),
+  replaceInChapitres: (data)       => req('POST', '/chapitres/replace', data),
 
   // Stats
   getStats:       ()           => req('GET',  '/stats'),
