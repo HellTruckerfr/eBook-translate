@@ -44,10 +44,12 @@ const NAV = [
 export default function App() {
   const [stats, setStats]       = useState(null)
   const [wsEvents, setWsEvents] = useState([])
+  const [usage, setUsage]       = useState(null)
 
   const onMessage = useCallback((msg) => {
     if (msg.type === 'stats') setStats(msg.data)
     if (msg.stats) setStats(msg.stats)
+    if (msg.usage) setUsage(msg.usage)
     setWsEvents(prev => [msg, ...prev.slice(0, 49)])
   }, [])
 
@@ -73,6 +75,18 @@ export default function App() {
 
         {stats && stats.total > 0 && (
           <div className="px-4 pb-2 pt-3 border-t border-border">
+            {usage && (
+              <div className="mb-2 p-2 rounded-lg bg-bg border border-border">
+                <div className="flex justify-between text-xs text-text-muted mb-0.5">
+                  <span>Tokens session</span>
+                  <span className="font-mono">{((usage.prompt_tokens + usage.completion_tokens) / 1000).toFixed(1)}k</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-text-muted">Coût estimé</span>
+                  <span className="font-mono text-accent-light">~${usage.cout_usd.toFixed(4)}</span>
+                </div>
+              </div>
+            )}
             <div className="flex justify-between text-xs text-text-muted mb-1.5">
               <span>{stats.traduits} / {stats.total} chapitres</span>
               <span>{Math.round(stats.traduits / stats.total * 100)}%</span>
