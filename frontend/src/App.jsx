@@ -1,4 +1,4 @@
-import React, { useState, useCallback, Component } from 'react'
+import React, { useState, useCallback, useEffect, Component } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import { Layers, List, Languages, Download, Settings, Upload, Terminal } from 'lucide-react'
 import { useWebSocket } from './useWebSocket'
@@ -44,7 +44,11 @@ const NAV = [
 export default function App() {
   const [stats, setStats]       = useState(null)
   const [wsEvents, setWsEvents] = useState([])
-  const [usage, setUsage]       = useState(null)
+  const [usage, setUsage]       = useState({ prompt_tokens: 0, completion_tokens: 0, cout_usd: 0.0 })
+
+  useEffect(() => {
+    fetch('/api/usage').then(r => r.json()).then(setUsage).catch(() => {})
+  }, [])
 
   const onMessage = useCallback((msg) => {
     if (msg.type === 'stats') setStats(msg.data)
@@ -75,8 +79,7 @@ export default function App() {
 
         {stats && stats.total > 0 && (
           <div className="px-4 pb-2 pt-3 border-t border-border">
-            {usage && (
-              <div className="mb-2 p-2 rounded-lg bg-bg border border-border">
+            <div className="mb-2 p-2 rounded-lg bg-bg border border-border">
                 <div className="flex justify-between text-xs text-text-muted mb-0.5">
                   <span>Tokens session</span>
                   <span className="font-mono">{((usage.prompt_tokens + usage.completion_tokens) / 1000).toFixed(1)}k</span>
@@ -86,7 +89,6 @@ export default function App() {
                   <span className="font-mono text-accent-light">~${usage.cout_usd.toFixed(4)}</span>
                 </div>
               </div>
-            )}
             <div className="flex justify-between text-xs text-text-muted mb-1.5">
               <span>{stats.traduits} / {stats.total} chapitres</span>
               <span>{Math.round(stats.traduits / stats.total * 100)}%</span>
