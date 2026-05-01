@@ -132,7 +132,7 @@ En production (après installation), le log backend se trouve dans le dossier d'
 C:\eBook Translate\ebook-backend.log
 ```
 
-Fallback sur `%APPDATA%\eBook-Translate\ebook-backend.log` si le dossier n'est pas accessible en écriture.
+Fallback sur `%APPDATA%\eBook-Translate\ebook-backend.log` si le dossier n'est pas accessible en écriture (droits insuffisants sur `C:\`).
 
 ---
 
