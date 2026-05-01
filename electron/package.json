@@ -15,9 +15,11 @@
   "build": {
     "appId": "com.helltrucker.ebook-translate",
     "productName": "eBook Translate",
+    "icon": "icon.ico",
     "directories": { "output": "../dist-electron" },
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }]
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -31,6 +33,6 @@
       { "from": "../backend-dist/", "to": "backend/", "filter": ["**/*"] },
       { "from": "../frontend/dist/", "to": "frontend-dist/", "filter": ["**/*"] }
     ],
-    "files": ["main.js", "preload.js"]
+    "files": ["main.js", "preload.js", "icon.ico"]
   }
 }
