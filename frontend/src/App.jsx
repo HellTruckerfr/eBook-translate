@@ -57,7 +57,7 @@ export default function App() {
     <div className="flex h-screen overflow-hidden">
       <aside className="w-56 bg-bg-card border-r border-border flex flex-col shrink-0">
         <div className="p-6 border-b border-border">
-          <h1 className="text-base font-bold text-text-primary tracking-wide">MVS Traduction</h1>
+          <h1 className="text-base font-bold text-text-primary tracking-wide">eBook Translate</h1>
         </div>
 
         <nav className="flex-1 p-3 space-y-1">

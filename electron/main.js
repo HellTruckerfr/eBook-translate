@@ -8,7 +8,7 @@ let backendProcess = null
 
 function getBackendPath() {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'backend', 'mvs-backend.exe')
+    return path.join(process.resourcesPath, 'backend', 'ebook-backend.exe')
   }
   return null
 }

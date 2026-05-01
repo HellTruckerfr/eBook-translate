@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-APP_DATA = Path(os.environ.get("APPDATA", Path.home())) / "MVS-Traduction"
+APP_DATA = Path(os.environ.get("APPDATA", Path.home())) / "eBook-Translate"
 APP_DATA.mkdir(parents=True, exist_ok=True)
 CONFIG_FILE = APP_DATA / "config.json"
 
@@ -12,7 +12,7 @@ DEFAULT_CONFIG = {
     "mistral_model_resume": "mistral-small-latest",
     "workers": 5,
     "arc_resume_frequence": 50,
-    "output_dir": str(Path.home() / "Documents" / "MVS-Traduction"),
+    "output_dir": str(Path.home() / "Documents" / "eBook-Translate"),
     "projet_actif": None,
     "langue_source": "anglais",
     "langue_cible": "français",

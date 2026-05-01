@@ -6,7 +6,7 @@ from mistralai.client import Mistral
 import config as cfg
 from database import get_db
 
-logger = logging.getLogger("mvs.translator")
+logger = logging.getLogger("ebook.translator")
 
 def clean_markdown(text: str) -> str:
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)

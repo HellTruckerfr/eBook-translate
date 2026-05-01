@@ -247,7 +247,7 @@ function CreateProjetModal({ onClose, onCreated }) {
         <div className="p-6 space-y-5 overflow-y-auto">
           <div>
             <label className="block text-sm text-text-secondary mb-1.5">Nom du projet</label>
-            <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ex : My Vampire System, Overlord..."
+            <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ex : Overlord, Solo Leveling..."
               className="w-full bg-bg border border-border rounded-lg px-4 py-2.5 text-sm text-text-primary outline-none focus:border-accent/50" />
           </div>
 

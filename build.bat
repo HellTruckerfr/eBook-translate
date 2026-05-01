@@ -1,6 +1,6 @@
 @echo off
 echo ===================================
-echo   MVS Traduction — Build installer
+echo   eBook Translate — Build installer
 echo ===================================
 echo.
 
@@ -19,7 +19,7 @@ if exist "..\backend-dist" rmdir /s /q "..\backend-dist"
 
 venv\Scripts\pip install pyinstaller >nul 2>&1
 
-venv\Scripts\pyinstaller --onefile --name mvs-backend --distpath ..\backend-dist ^
+venv\Scripts\pyinstaller --onefile --name ebook-backend --distpath ..\backend-dist ^
   --hidden-import uvicorn.logging ^
   --hidden-import uvicorn.loops ^
   --hidden-import uvicorn.loops.auto ^

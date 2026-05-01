@@ -1,7 +1,7 @@
 {
-  "name": "mvs-traduction",
+  "name": "ebook-translate",
   "version": "1.0.0",
-  "description": "Outil de traduction pour audiobooks — My Vampire System",
+  "description": "Outil de traduction automatique d'EPUBs via Mistral",
   "main": "main.js",
   "author": "Helltrucker",
   "scripts": {
@@ -13,8 +13,8 @@
     "electron-builder": "^24.13.0"
   },
   "build": {
-    "appId": "com.helltrucker.mvs-traduction",
-    "productName": "MVS Traduction",
+    "appId": "com.helltrucker.ebook-translate",
+    "productName": "eBook Translate",
     "directories": { "output": "../dist-electron" },
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }]
@@ -24,7 +24,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "MVS Traduction",
+      "shortcutName": "eBook Translate",
       "include": "installer.nsh"
     },
     "extraResources": [

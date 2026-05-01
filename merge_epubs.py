@@ -73,8 +73,8 @@ def merge_epubs(input_paths, output_path):
     print(f"\nConstruction du EPUB fusionné ({len(chapters)} chapitres)...")
 
     merged = epub.EpubBook()
-    merged.set_identifier("mvs-complet")
-    merged.set_title("My Vampire System — Complet")
+    merged.set_identifier("ebook-complet")
+    merged.set_title("eBook — Complet")
     merged.set_language("en")
 
     # Ajouter les CSS

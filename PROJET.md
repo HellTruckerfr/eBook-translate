@@ -1,6 +1,6 @@
-# MVS Traduction
+# eBook Translate
 
-Outil de traduction My Vampire System — EPUB anglais vers français.
+Outil de traduction d'EPUBs anglais vers le français.
 
 ## Dépendances
 - Mistral Large API (traduction)
@@ -9,9 +9,9 @@ Outil de traduction My Vampire System — EPUB anglais vers français.
 - React + Tailwind (GUI)
 
 ## Sorties
-- 8 EPUBs français (un par arc)
-- 2545 fichiers TXT (un par chapitre)
-- 2545 fichiers JSON (interface vers mvs-audiobook)
+- EPUBs français (un par arc)
+- Fichiers TXT (un par chapitre)
+- Fichiers JSON (pipeline audiobook)
 
 ## Projet lié
-→ mvs-audiobook (consomme les JSON produits ici)
+→ ebook-audiobook (consomme les JSON produits ici)

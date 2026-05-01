@@ -17,12 +17,12 @@ from exporter import export_json_chapters, export_txt_chapters, export_epub_by_a
 
 # ── Logging ────────────────────────────────────────────────
 def _resolve_log_file() -> Path:
-    # En mode packagé : sys.executable = <install>/resources/backend/mvs-backend.exe
+    # En mode packagé : sys.executable = <install>/resources/backend/ebook-backend.exe
     # On essaie d'écrire dans le dossier d'installation ; fallback sur AppData si refus
     candidates = []
     if getattr(sys, "frozen", False):
-        candidates.append(Path(sys.executable).parent.parent.parent / "mvs-backend.log")
-    candidates.append(Path(cfg.APP_DATA) / "mvs-backend.log")
+        candidates.append(Path(sys.executable).parent.parent.parent / "ebook-backend.log")
+    candidates.append(Path(cfg.APP_DATA) / "ebook-backend.log")
     for path in candidates:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -44,10 +44,10 @@ logging.basicConfig(level=logging.DEBUG, handlers=[_file_handler, _console_handl
 # Silence noisy uvicorn access logs in the file (keep errors)
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
-logger = logging.getLogger("mvs")
-logger.info(f"=== MVS Traduction backend démarrage — log: {_LOG_FILE} ===")
+logger = logging.getLogger("ebook")
+logger.info(f"=== eBook Translate backend démarrage — log: {_LOG_FILE} ===")
 
-app = FastAPI(title="MVS Traduction")
+app = FastAPI(title="eBook Translate")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 @app.on_event("startup")

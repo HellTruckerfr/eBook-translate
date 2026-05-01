@@ -146,7 +146,7 @@ export default function SettingsPage() {
           <input value={config.output_dir || ''}
             onChange={e => setConfig(c => ({...c, output_dir: e.target.value}))}
             className="w-full bg-bg border border-border rounded-lg px-4 py-2.5 text-sm text-text-primary outline-none focus:border-accent/50 focus:bg-bg-card"
-            placeholder="Ex : C:\Users\winte\Documents\MVS-Traduction" />
+            placeholder="Ex : C:\Users\winte\Documents\eBook-Translate" />
           {config.output_dir && (
             <p className="text-xs text-text-muted mt-1 font-mono">→ {config.output_dir}</p>
           )}

@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
-title MVS Traduction - Demarrage
+title eBook Translate - Demarrage
 echo.
 echo  ================================
-echo    MVS Traduction - Demarrage
+echo    eBook Translate - Demarrage
 echo  ================================
 echo.
 
@@ -60,7 +60,7 @@ if not exist "frontend\node_modules" (
 echo [4/4] Demarrage des serveurs...
 
 :: Lance le backend
-start "MVS-Backend" cmd /c "call backend\venv\Scripts\activate.bat && cd backend && uvicorn main:app --port 8000 --reload --log-level info"
+start "eBook-Backend" cmd /c "call backend\venv\Scripts\activate.bat && cd backend && uvicorn main:app --port 8000 --reload --log-level info"
 
 :: Attend que le backend soit pret
 echo Attente du backend...
@@ -70,7 +70,7 @@ curl -s http://localhost:8000/api/config >nul 2>&1
 if errorlevel 1 goto wait_loop
 
 :: Lance le frontend avec ouverture auto du navigateur
-start "MVS-Frontend" /min cmd /c "cd frontend && npm run dev -- --open"
+start "eBook-Frontend" /min cmd /c "cd frontend && npm run dev -- --open"
 
 echo.
 echo  Application demarree ! Elle s'ouvre dans votre navigateur.
@@ -78,6 +78,6 @@ echo  Appuyez sur une touche pour tout arreter.
 echo.
 pause >nul
 
-taskkill /f /fi "WINDOWTITLE eq MVS-Backend*" >nul 2>&1
-taskkill /f /fi "WINDOWTITLE eq MVS-Frontend*" >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq eBook-Backend*" >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq eBook-Frontend*" >nul 2>&1
 echo Arret effectue.
