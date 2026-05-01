@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 echo [1/2] Build frontend React...
 cd frontend
 call npm run build

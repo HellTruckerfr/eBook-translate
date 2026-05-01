@@ -1,6 +1,7 @@
 @echo off
+chcp 65001 >nul
 echo ===================================
-echo   eBook Translate — Build installer
+echo   eBook Translate - Build installer
 echo ===================================
 echo.
 
