@@ -1,0 +1,43 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/build/
+backend/*.spec
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build outputs
+backend-dist/
+frontend/dist/
+dist-electron/
+
+# Node
+frontend/node_modules/
+electron/node_modules/
+
+# Données utilisateur / runtime
+data/
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Environnement
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Artefacts pip mal formés
+=*
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user

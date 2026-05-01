@@ -1,0 +1,36 @@
+{
+  "name": "mvs-traduction",
+  "version": "1.0.0",
+  "description": "Outil de traduction pour audiobooks — My Vampire System",
+  "main": "main.js",
+  "author": "Helltrucker",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.0"
+  },
+  "build": {
+    "appId": "com.helltrucker.mvs-traduction",
+    "productName": "MVS Traduction",
+    "directories": { "output": "../dist-electron" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MVS Traduction",
+      "include": "installer.nsh"
+    },
+    "extraResources": [
+      { "from": "../backend-dist/", "to": "backend/", "filter": ["**/*"] },
+      { "from": "../frontend/dist/", "to": "frontend-dist/", "filter": ["**/*"] }
+    ],
+    "files": ["main.js", "preload.js"]
+  }
+}
