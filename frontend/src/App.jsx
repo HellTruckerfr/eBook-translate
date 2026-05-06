@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, Component } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
-import { Layers, List, Languages, Download, Settings, Upload, Terminal } from 'lucide-react'
+import { Layers, List, Languages, Download, Settings, Upload, Terminal, Minus, Square, X } from 'lucide-react'
 import { useWebSocket } from './useWebSocket'
 import ProjetPage     from './pages/ProjetPage'
 import ImportPage     from './pages/ImportPage'
@@ -41,6 +41,8 @@ const NAV = [
   { to: '/console',    icon: Terminal,  label: 'Console'    },
 ]
 
+const wc = typeof window !== 'undefined' ? window.electron?.windowControls : null
+
 export default function App() {
   const [stats, setStats]       = useState(null)
   const [wsEvents, setWsEvents] = useState([])
@@ -60,26 +62,45 @@ export default function App() {
   const wsConnected = useWebSocket(onMessage)
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <aside className="w-56 bg-bg-card border-r border-border flex flex-col shrink-0">
-        <div className="p-6 border-b border-border">
-          <h1 className="text-base font-bold text-text-primary tracking-wide">eBook Translate</h1>
+    <div className="flex flex-col h-screen overflow-hidden">
+
+      {/* Barre de titre custom — draggable, boutons IPC, zero gap natif */}
+      <div className="app-drag flex items-center shrink-0 bg-bg-card border-b border-border" style={{ height: '32px' }}>
+        <span className="app-no-drag ml-4 text-sm font-bold text-text-primary tracking-wide select-none">eBook Translate</span>
+        <div className="app-no-drag ml-auto flex h-full">
+          <button onClick={() => wc?.minimize()} title="Réduire"
+            className="w-11 h-full flex items-center justify-center text-text-muted hover:bg-white/10 hover:text-text-primary transition-colors">
+            <Minus size={12} />
+          </button>
+          <button onClick={() => wc?.maximize()} title="Agrandir"
+            className="w-11 h-full flex items-center justify-center text-text-muted hover:bg-white/10 hover:text-text-primary transition-colors">
+            <Square size={11} />
+          </button>
+          <button onClick={() => wc?.close()} title="Fermer"
+            className="w-11 h-full flex items-center justify-center text-text-muted hover:bg-red-500/80 hover:text-white transition-colors">
+            <X size={13} />
+          </button>
         </div>
+      </div>
 
-        <nav className="flex-1 p-3 space-y-1">
-          {NAV.map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} end={to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                ${isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'}`}>
-              <Icon size={16} />{label}
-            </NavLink>
-          ))}
-        </nav>
+      {/* Layout principal */}
+      <div className="flex flex-1 overflow-hidden">
 
-        {stats && stats.total > 0 && (
-          <div className="px-4 pb-2 pt-3 border-t border-border">
-            <div className="mb-2 p-2 rounded-lg bg-bg border border-border">
+        <aside className="w-56 bg-bg-card border-r border-border flex flex-col shrink-0">
+          <nav className="flex-1 p-3 space-y-1">
+            {NAV.map(({ to, icon: Icon, label }) => (
+              <NavLink key={to} to={to} end={to === '/'}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                  ${isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'}`}>
+                <Icon size={16} />{label}
+              </NavLink>
+            ))}
+          </nav>
+
+          {stats && stats.total > 0 && (
+            <div className="px-4 pb-2 pt-3 border-t border-border">
+              <div className="mb-2 p-2 rounded-lg bg-bg border border-border">
                 <div className="flex justify-between text-xs text-text-muted mb-0.5">
                   <span>Tokens session</span>
                   <span className="font-mono">{((usage.prompt_tokens + usage.completion_tokens) / 1000).toFixed(1)}k</span>
@@ -89,40 +110,42 @@ export default function App() {
                   <span className="font-mono text-accent-light">~{(usage.cout_eur ?? usage.cout_usd * 0.92).toFixed(4)} €</span>
                 </div>
               </div>
-            <div className="flex justify-between text-xs text-text-muted mb-1.5">
-              <span>{stats.traduits} / {stats.total} chapitres</span>
-              <span>{Math.round(stats.traduits / stats.total * 100)}%</span>
+              <div className="flex justify-between text-xs text-text-muted mb-1.5">
+                <span>{stats.traduits} / {stats.total} chapitres</span>
+                <span>{Math.round(stats.traduits / stats.total * 100)}%</span>
+              </div>
+              <div className="h-1 bg-border rounded-full overflow-hidden">
+                <div className="h-full bg-accent rounded-full transition-all duration-500"
+                  style={{ width: `${stats.traduits / stats.total * 100}%` }} />
+              </div>
             </div>
-            <div className="h-1 bg-border rounded-full overflow-hidden">
-              <div className="h-full bg-accent rounded-full transition-all duration-500"
-                style={{ width: `${stats.traduits / stats.total * 100}%` }} />
-            </div>
+          )}
+
+          <div className="p-3 border-t border-border">
+            <NavLink to="/parametres"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                ${isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'}`}>
+              <Settings size={16} />Paramètres
+            </NavLink>
           </div>
-        )}
+        </aside>
 
-        <div className="p-3 border-t border-border">
-          <NavLink to="/parametres"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-              ${isActive ? 'bg-accent/20 text-accent-light' : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'}`}>
-            <Settings size={16} />Paramètres
-          </NavLink>
-        </div>
-      </aside>
+        <main className="flex-1 overflow-auto bg-bg">
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/"            element={<ProjetPage />} />
+              <Route path="/import"      element={<ImportPage />} />
+              <Route path="/glossaire"   element={<GlossairePage wsEvents={wsEvents} />} />
+              <Route path="/traduction"  element={<TraductionPage stats={stats} wsEvents={wsEvents} />} />
+              <Route path="/export"      element={<ExportPage />} />
+              <Route path="/console"     element={<ConsolePage wsEvents={wsEvents} connected={wsConnected} />} />
+              <Route path="/parametres"  element={<SettingsPage />} />
+            </Routes>
+          </ErrorBoundary>
+        </main>
 
-      <main className="flex-1 overflow-auto bg-bg">
-        <ErrorBoundary>
-        <Routes>
-          <Route path="/"            element={<ProjetPage />} />
-          <Route path="/import"      element={<ImportPage />} />
-          <Route path="/glossaire"   element={<GlossairePage wsEvents={wsEvents} />} />
-          <Route path="/traduction"  element={<TraductionPage stats={stats} wsEvents={wsEvents} />} />
-          <Route path="/export"      element={<ExportPage />} />
-          <Route path="/console"     element={<ConsolePage wsEvents={wsEvents} connected={wsConnected} />} />
-          <Route path="/parametres"  element={<SettingsPage />} />
-        </Routes>
-        </ErrorBoundary>
-      </main>
+      </div>
     </div>
   )
 }

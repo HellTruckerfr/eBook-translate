@@ -1,9 +1,8 @@
-const { app, BrowserWindow, shell, globalShortcut } = require('electron')
+const { app, BrowserWindow, shell, globalShortcut, ipcMain, Menu } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 
-// Verrou single-instance : si une copie tourne déjà, on la focus et on quitte
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
@@ -22,7 +21,6 @@ function getBackendPath() {
 function killBackend() {
   if (!backendProcess) return
   try {
-    // taskkill /F /T tue aussi les processus enfants (extraction onefile)
     spawn('taskkill', ['/pid', String(backendProcess.pid), '/f', '/t'], { shell: false })
   } catch (e) {}
   backendProcess = null
@@ -51,7 +49,7 @@ const LOADING_HTML = `data:text/html,<!DOCTYPE html>
 <head><meta charset="utf-8"><style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0f0f0f;
+    background: #1a1a1a;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     height: 100vh;
@@ -76,15 +74,23 @@ const LOADING_HTML = `data:text/html,<!DOCTYPE html>
 </body>
 </html>`
 
+// ── IPC window controls ────────────────────────────────────
+ipcMain.on('window-minimize', () => mainWindow?.minimize())
+ipcMain.on('window-maximize', () => {
+  if (!mainWindow) return
+  mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize()
+})
+ipcMain.on('window-close', () => mainWindow?.close())
+ipcMain.handle('window-is-maximized', () => mainWindow?.isMaximized() ?? false)
+
 async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    backgroundColor: '#0f0f0f',
-    titleBarStyle: 'hidden',
-    titleBarOverlay: { color: '#1a1a1a', symbolColor: '#94a3b8', height: 32 },
+    frame: false,
+    backgroundColor: '#1a1a1a',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -97,20 +103,28 @@ async function createWindow() {
     return { action: 'deny' }
   })
 
-  // Bloque toute navigation qui sortirait du fichier HTML chargé (hash routing only)
   mainWindow.webContents.on('will-navigate', (event, url) => {
     const current = mainWindow.webContents.getURL().split('#')[0]
     if (url.split('#')[0] !== current) event.preventDefault()
   })
 
-  // Recharge la page si le renderer crashe
+  mainWindow.webContents.on('context-menu', (event, params) => {
+    const menu = Menu.buildFromTemplate([
+      { label: 'Couper', role: 'cut', enabled: params.editFlags.canCut },
+      { label: 'Copier', role: 'copy', enabled: params.editFlags.canCopy },
+      { label: 'Coller', role: 'paste', enabled: params.editFlags.canPaste },
+      { type: 'separator' },
+      { label: 'Tout sélectionner', role: 'selectAll' },
+    ])
+    menu.popup()
+  })
+
   mainWindow.webContents.on('render-process-gone', (event, details) => {
     console.error('Renderer crashed:', details.reason)
     setTimeout(() => mainWindow.reload(), 1000)
   })
 
   if (app.isPackaged) {
-    // Affiche l'écran de chargement immédiatement — la fenêtre est visible pendant l'extraction PyInstaller
     mainWindow.loadURL(LOADING_HTML)
     try {
       await waitForBackend('http://localhost:8000/api/config')
@@ -120,7 +134,6 @@ async function createWindow() {
     mainWindow.loadFile(path.join(process.resourcesPath, 'frontend-dist', 'index.html'))
   } else {
     mainWindow.loadURL('http://localhost:3000')
-    mainWindow.webContents.openDevTools()
   }
 }
 
@@ -132,7 +145,6 @@ app.whenReady().then(() => {
   })
 })
 
-// Si l'utilisateur double-clique alors qu'une instance tourne déjà → focus la fenêtre existante
 app.on('second-instance', () => {
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore()

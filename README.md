@@ -136,6 +136,20 @@ Soit typiquement `C:\Users\<nom>\AppData\Roaming\eBook-Translate\ebook-backend.l
 
 ---
 
+## Changelog
+
+### v1.0.1 — 2026-05-06
+
+- **Barre de titre custom** — remplacement de l'overlay natif Electron par une barre React avec boutons minimize / maximize / close via IPC ; zone draggable correctement isolée des contrôles
+- **Menu contextuel clic-droit** — copier / couper / coller / tout sélectionner maintenant disponibles dans tous les champs texte de l'interface
+- **Dialogs de confirmation** — remplacement des `confirm()` natifs (non fonctionnels en mode frameless) par un composant `ConfirmDialog` React pour les actions destructives : reset total, reset par plage, recherche & remplacement
+
+### v1.0.0 — 2026-05-01
+
+- Release initiale
+
+---
+
 ## Licence
 
 Usage personnel / éducatif.

@@ -57,6 +57,16 @@ if not exist "frontend\node_modules" (
     echo [3/4] Dependances frontend OK.
 )
 
+:: Installation Electron
+if not exist "electron\node_modules" (
+    echo [3b/4] Installation des dependances Electron...
+    cd electron
+    call npm install
+    cd ..
+) else (
+    echo [3b/4] Dependances Electron OK.
+)
+
 echo [4/4] Demarrage des serveurs...
 
 :: Lance le backend
@@ -69,15 +79,27 @@ timeout /t 1 /nobreak >nul
 curl -s http://localhost:8000/api/config >nul 2>&1
 if errorlevel 1 goto wait_loop
 
-:: Lance le frontend avec ouverture auto du navigateur
-start "eBook-Frontend" /min cmd /c "cd frontend && npm run dev -- --open"
+:: Lance le frontend Vite (sans ouvrir le navigateur, Electron s'en charge)
+start "eBook-Frontend" /min cmd /c "cd frontend && npm run dev"
+
+:: Attend que Vite soit pret sur le port 3000
+echo Attente du frontend...
+:wait_vite
+timeout /t 1 /nobreak >nul
+curl -s http://localhost:3000 >nul 2>&1
+if errorlevel 1 goto wait_vite
+
+:: Lance Electron en mode dev (charge depuis localhost:3000)
+start "eBook-Electron" cmd /c "cd electron && node_modules\.bin\electron ."
 
 echo.
-echo  Application demarree ! Elle s'ouvre dans votre navigateur.
+echo  Application demarree dans Electron.
 echo  Appuyez sur une touche pour tout arreter.
 echo.
 pause >nul
 
 taskkill /f /fi "WINDOWTITLE eq eBook-Backend*" >nul 2>&1
 taskkill /f /fi "WINDOWTITLE eq eBook-Frontend*" >nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq eBook-Electron*" >nul 2>&1
+taskkill /f /im "electron.exe" >nul 2>&1
 echo Arret effectue.

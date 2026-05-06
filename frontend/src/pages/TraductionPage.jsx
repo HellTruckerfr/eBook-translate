@@ -30,6 +30,7 @@ export default function TraductionPage({ stats, wsEvents }) {
   const [error, setError] = useState(null)
   const [lastErrors, setLastErrors] = useState([])
   const [usage, setUsage] = useState(null)
+  const [confirmMsg, setConfirmMsg] = useState(null)
   const statsTimerRef = useRef(null)
 
   useEffect(() => {
@@ -98,14 +99,19 @@ export default function TraductionPage({ stats, wsEvents }) {
     setError(null)
   }
 
-  const resetTout = async () => {
+  const resetTout = () => {
     const total = arcStats.reduce((s, a) => s + a.traduits, 0)
-    if (!confirm(`Remettre ${total} chapitre(s) traduit(s) en attente et relancer depuis le début ?`)) return
-    await api.resetTraductionTout()
-    setRunning(false)
-    setError(null)
-    setLastErrors([])
-    await loadStats()
+    setConfirmMsg({
+      message: `Remettre ${total} chapitre(s) traduit(s) en attente et relancer depuis le début ?`,
+      onConfirm: async () => {
+        setConfirmMsg(null)
+        await api.resetTraductionTout()
+        setRunning(false)
+        setError(null)
+        setLastErrors([])
+        await loadStats()
+      }
+    })
   }
 
   const retranslate = async (id) => {
@@ -268,6 +274,34 @@ export default function TraductionPage({ stats, wsEvents }) {
           onRetranslate={retranslate}
         />
       )}
+
+      {confirmMsg && (
+        <ConfirmDialog
+          message={confirmMsg.message}
+          onConfirm={confirmMsg.onConfirm}
+          onCancel={() => setConfirmMsg(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function ConfirmDialog({ message, onConfirm, onCancel }) {
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[200] p-4">
+      <div className="bg-bg-card border border-border rounded-xl p-6 max-w-md w-full shadow-xl">
+        <p className="text-text-primary text-sm whitespace-pre-line mb-6">{message}</p>
+        <div className="flex items-center justify-end gap-3">
+          <button onClick={onCancel}
+            className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary border border-border rounded-lg transition-colors">
+            Annuler
+          </button>
+          <button onClick={onConfirm}
+            className="px-4 py-2 text-sm bg-status-error/20 border border-status-error/40 text-status-error hover:bg-status-error/30 rounded-lg font-medium transition-colors">
+            Confirmer
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -297,6 +331,7 @@ function RechercheRemplace() {
   const [replacing, setReplacing]   = useState(false)
   const [replaceResult, setReplaceResult] = useState(null)
   const [expanded, setExpanded]     = useState(new Set())
+  const [confirmMsg, setConfirmMsg] = useState(null)
 
   const search = async () => {
     if (!query.trim()) return
@@ -338,17 +373,23 @@ function RechercheRemplace() {
     })
   }
 
-  const replace = async () => {
+  const replace = () => {
     const ids = [...selected]
     if (!ids.length) return
     const label = replaceWith === '' ? '(vide)' : `"${replaceWith}"`
-    if (!confirm(`Remplacer "${query}" par ${label} dans ${ids.length} chapitre(s) ?\nOpération irréversible.`)) return
+    setConfirmMsg({
+      message: `Remplacer "${query}" par ${label} dans ${ids.length} chapitre(s) ?\nOpération irréversible.`,
+      onConfirm: () => { setConfirmMsg(null); doReplace(ids) }
+    })
+  }
+
+  const doReplace = async (ids) => {
     setReplacing(true)
     setReplaceResult(null)
     try {
       const res = await api.replaceInChapitres({ find: query, replace: replaceWith, chapter_ids: ids, case_sensitive: caseSensitive })
-      setReplaceResult(res)
       await search()
+      setReplaceResult(res)
     } catch (e) {
       setReplaceResult({ error: e.message })
     }
@@ -476,6 +517,14 @@ function RechercheRemplace() {
           )}
         </div>
       )}
+
+      {confirmMsg && (
+        <ConfirmDialog
+          message={confirmMsg.message}
+          onConfirm={confirmMsg.onConfirm}
+          onCancel={() => setConfirmMsg(null)}
+        />
+      )}
     </div>
   )
 }
@@ -486,11 +535,18 @@ function ResetPlage({ onDone }) {
   const [fin, setFin]       = useState('')
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [confirmMsg, setConfirmMsg] = useState(null)
 
-  const run = async () => {
+  const run = () => {
     const d = parseInt(debut), f = parseInt(fin)
     if (!d || !f || d > f) return
-    if (!confirm(`Remettre les chapitres ${d} à ${f} en attente et effacer leur traduction ?`)) return
+    setConfirmMsg({
+      message: `Remettre les chapitres ${d} à ${f} en attente et effacer leur traduction ?`,
+      onConfirm: () => { setConfirmMsg(null); doRun(d, f) }
+    })
+  }
+
+  const doRun = async (d, f) => {
     setLoading(true)
     setResult(null)
     try {
@@ -537,6 +593,14 @@ function ResetPlage({ onDone }) {
             </p>
           )}
         </div>
+      )}
+
+      {confirmMsg && (
+        <ConfirmDialog
+          message={confirmMsg.message}
+          onConfirm={confirmMsg.onConfirm}
+          onCancel={() => setConfirmMsg(null)}
+        />
       )}
     </div>
   )

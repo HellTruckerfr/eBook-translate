@@ -1,6 +1,6 @@
 {
   "name": "ebook-translate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Outil de traduction automatique d'EPUBs via Mistral",
   "main": "main.js",
   "author": "Helltrucker",
